@@ -50,7 +50,6 @@ public class MainActivity extends Activity {
 	private OnClickListener weatherClickListener = new OnClickListener() {
 		public void onClick(View v) {
 			gpsLocation();
-		 	getRequest(latitude, longitude);
 		}
 	};
 	
@@ -74,10 +73,20 @@ public class MainActivity extends Activity {
 	        Toast.makeText(getApplicationContext(), "Wi-FiかGPSをONにしてください", Toast.LENGTH_LONG).show();
 	        return;
 	    }
+		
 				
 		// ロケーション取得を開始
 	    locationManager.requestLocationUpdates(provider, 1000L, 0, mLocationListener);
 	}
+	
+	@Override
+    protected void onPause() {
+        if (locationManager != null) {
+        	locationManager.removeUpdates(mLocationListener);
+        }
+        super.onPause();
+    }
+
 	
 	private LocationListener mLocationListener = new LocationListener() {
         public void onStatusChanged(String provider, int status, Bundle extras) {
@@ -91,6 +100,7 @@ public class MainActivity extends Activity {
         	longitude = Double.toString(location.getLongitude());
             // 位置情報の取得を1回しか行わないので取得をストップ
             locationManager.removeUpdates(mLocationListener);
+		 	getRequest(latitude, longitude);
         }
     };
 	
@@ -130,7 +140,7 @@ public class MainActivity extends Activity {
         protected void onPostExecute(String result)
         {
             try {
-                JSONObject json = new JSONObject(result);
+            	JSONObject json = new JSONObject(result);
 //////////////////////////////////////////////////////////////////
 // お天気
                 JSONObject obj = json.getJSONObject("city");
@@ -139,18 +149,17 @@ public class MainActivity extends Activity {
              	JSONArray listArray = json.getJSONArray("list");
              	JSONObject obj2 = listArray.getJSONObject(0);
              	// 気温(Kから℃に変換)
-             	 JSONObject mainObj = obj2.getJSONObject("temp");
-             	 float currentTemp = (float) (mainObj.getDouble("day") - 273.15f);
-             	 String ct = currentTemp + "度";
-                 JSONArray weatherArray = obj2.getJSONArray("weather");
-                 // 天気
+             	JSONObject mainObj = obj2.getJSONObject("temp");
+             	int currentTemp = (int) (mainObj.getDouble("day") - 273.15f);
+                JSONArray weatherArray = obj2.getJSONArray("weather");
+                // 天気
 				String weather = weatherArray.getJSONObject(0).getString("main");
 				
 				//メール送信
 				Uri uri = Uri.parse("mailto:test@test.com"); 
 	      		Intent intent=new Intent(Intent.ACTION_SENDTO,uri); 
 	        	intent.putExtra(Intent.EXTRA_SUBJECT,"現在地の天気"); 
-	        	intent.putExtra(Intent.EXTRA_TEXT, String.format("場所：%s\n天気：%s\n気温：%d度", cityName, weather, (int)currentTemp)); 
+	        	intent.putExtra(Intent.EXTRA_TEXT, String.format("場所：%s\n天気：%s\n気温：%d度", cityName, weather, currentTemp)); 
 	        	intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK); 
 	        	startActivity(intent);
 	        
