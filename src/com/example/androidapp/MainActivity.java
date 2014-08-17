@@ -12,15 +12,20 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+
 import android.app.Activity;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -35,16 +40,17 @@ public class MainActivity extends Activity {
 	TextView weatherText = null;
 	private LocationManager locationManager = null;
 	String latitude, longitude;
+	SharedPreferences sharedPref;
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		
+		sharedPref = PreferenceManager.getDefaultSharedPreferences(this);
+		
 		Button weather = (Button) findViewById(R.id.button1);
-		
 		weather.setOnClickListener(weatherClickListener);
-		
 	}
 	
 	private OnClickListener weatherClickListener = new OnClickListener() {
@@ -156,7 +162,8 @@ public class MainActivity extends Activity {
 				String weather = weatherArray.getJSONObject(0).getString("main");
 				
 				//メール送信
-				Uri uri = Uri.parse("mailto:test@test.com"); 
+				String mailaddless = sharedPref.getString("mailaddress", "");
+				Uri uri = Uri.parse("mailto:" + mailaddless); 
 	      		Intent intent=new Intent(Intent.ACTION_SENDTO,uri); 
 	        	intent.putExtra(Intent.EXTRA_SUBJECT,"現在地の天気"); 
 	        	intent.putExtra(Intent.EXTRA_TEXT, String.format("場所：%s\n天気：%s\n気温：%d度", cityName, weather, currentTemp)); 
@@ -168,6 +175,27 @@ public class MainActivity extends Activity {
                 Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_LONG).show();
                 e.printStackTrace();
             }
-        }
+        }   
     }
+	
+	public boolean onCreateOptionsMenu(Menu menu) {
+
+		// Inflate the menu; this adds items to the action bar if it is present.
+		getMenuInflater().inflate(R.menu.main, menu);
+		return true;
+	}
+
+	// 今回は、オプションメニューを使うために残してあります
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) {
+		// Handle action bar item clicks here. The action bar will
+		// automatically handle clicks on the Home/Up button, so long
+		// as you specify a parent activity in AndroidManifest.xml.
+		int id = item.getItemId();
+		if (id == R.id.action_settings) {
+			startActivity(new Intent(this, SettingPreferences.class));
+			return true;
+		}
+		return super.onOptionsItemSelected(item);
+	}
 }
